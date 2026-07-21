@@ -117,6 +117,36 @@ def _register_success(login_key: str):
     store[login_key] = {"fails": 0, "locked_until": None}
 
 
+def render_payslip_card_zoomable(card_html: str, height: int = 1700):
+    """확대/축소 버튼이 달린 명세서 카드를 그린다.
+    +/- 버튼으로 글자·표를 키우고 줄일 수 있고, 커진 만큼은 스크롤해서 볼 수 있다.
+    (핸드폰에서 숫자가 작게 보일 때 편하게 키워서 볼 수 있도록)"""
+    component_html = f"""
+    <div style="text-align:center; margin-bottom:10px;">
+        <button onclick="zoomOut()" style="padding:8px 14px; margin:0 4px; border:1px solid #ced4da; border-radius:6px; background:#f8f9fa; font-size:15px; cursor:pointer;">➖</button>
+        <span id="zoom-level" style="display:inline-block; min-width:50px; font-size:13px; color:#495057; font-weight:600;">100%</span>
+        <button onclick="zoomIn()" style="padding:8px 14px; margin:0 4px; border:1px solid #ced4da; border-radius:6px; background:#f8f9fa; font-size:15px; cursor:pointer;">➕</button>
+        <button onclick="zoomReset()" style="padding:8px 14px; margin:0 4px; border:1px solid #ced4da; border-radius:6px; background:#f8f9fa; font-size:13px; cursor:pointer;">↺ 원래크기</button>
+    </div>
+    <div id="zoom-scroll-area" style="overflow:auto; max-height:{max(height - 60, 400)}px; border:1px solid #e9ecef; border-radius:6px; -webkit-overflow-scrolling:touch;">
+        <div id="zoom-target" style="transform-origin: top left; transition: transform 0.12s ease;">
+            {card_html}
+        </div>
+    </div>
+    <script>
+        var scale = 1.0;
+        function applyZoom() {{
+            document.getElementById('zoom-target').style.transform = 'scale(' + scale + ')';
+            document.getElementById('zoom-level').innerText = Math.round(scale * 100) + '%';
+        }}
+        function zoomIn() {{ scale = Math.min(scale + 0.15, 2.5); applyZoom(); }}
+        function zoomOut() {{ scale = Math.max(scale - 0.15, 0.5); applyZoom(); }}
+        function zoomReset() {{ scale = 1.0; applyZoom(); }}
+    </script>
+    """
+    components.html(component_html, height=height, scrolling=True)
+
+
 def render_image_download_button(card_html: str, filename: str):
     """명세서 카드를 PNG 이미지로 변환해서 다운로드하는 버튼을 그린다.
     브라우저 자체 기능(html2canvas)으로 변환하므로 서버 쪽에 별도 프로그램 설치가 필요 없다.
@@ -132,7 +162,7 @@ def render_image_download_button(card_html: str, filename: str):
         </button>
         <div id="save-img-status" style="margin-top:8px; font-size:12px; color:#868e96;"></div>
     </div>
-    <div id="capture-wrapper" style="position:absolute; left:-9999px; top:-9999px;">
+    <div id="capture-wrapper" style="position:absolute; left:-9999px; top:-9999px; width:800px;">
         {card_html}
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -239,7 +269,7 @@ else:
             st.rerun()
 
     card_html, full_html = build_payslip_full_html(member_key, data[member_key], pay_year, pay_month)
-    st.markdown(card_html, unsafe_allow_html=True)
+    render_payslip_card_zoomable(card_html)
 
     st.download_button(
         "📥 이 명세서 다운로드 (HTML, 브라우저에서 열어 'Ctrl+P'로 PDF 저장 가능)",
