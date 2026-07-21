@@ -117,34 +117,105 @@ def _register_success(login_key: str):
     store[login_key] = {"fails": 0, "locked_until": None}
 
 
-def render_payslip_card_zoomable(card_html: str, height: int = 1700):
-    """확대/축소 버튼이 달린 명세서 카드를 그린다.
-    +/- 버튼으로 글자·표를 키우고 줄일 수 있고, 커진 만큼은 스크롤해서 볼 수 있다.
-    (핸드폰에서 숫자가 작게 보일 때 편하게 키워서 볼 수 있도록)"""
+def render_payslip_card_zoomable(card_html: str, box_height: int = 560):
+    """두 손가락 핀치줌 + 한 손가락 드래그로 이동 가능한 명세서 카드를 그린다.
+    (핸드폰에서 숫자가 작게 보일 때, 실제 사진/지도 앱처럼 두 손가락으로 확대·축소)"""
     component_html = f"""
-    <div style="text-align:center; margin-bottom:10px;">
-        <button onclick="zoomOut()" style="padding:8px 14px; margin:0 4px; border:1px solid #ced4da; border-radius:6px; background:#f8f9fa; font-size:15px; cursor:pointer;">➖</button>
-        <span id="zoom-level" style="display:inline-block; min-width:50px; font-size:13px; color:#495057; font-weight:600;">100%</span>
-        <button onclick="zoomIn()" style="padding:8px 14px; margin:0 4px; border:1px solid #ced4da; border-radius:6px; background:#f8f9fa; font-size:15px; cursor:pointer;">➕</button>
-        <button onclick="zoomReset()" style="padding:8px 14px; margin:0 4px; border:1px solid #ced4da; border-radius:6px; background:#f8f9fa; font-size:13px; cursor:pointer;">↺ 원래크기</button>
+    <div style="text-align:center; margin-bottom:6px; font-size:12px; color:#868e96;">
+        👆 두 손가락으로 확대·축소 · 한 손가락으로 이동 · 더블탭으로 원래 크기
     </div>
-    <div id="zoom-scroll-area" style="overflow:auto; max-height:{max(height - 60, 400)}px; border:1px solid #e9ecef; border-radius:6px; -webkit-overflow-scrolling:touch;">
-        <div id="zoom-target" style="transform-origin: top left; transition: transform 0.12s ease;">
+    <div id="pinch-area" style="
+            position:relative; overflow:hidden; touch-action:none;
+            height:{box_height}px; border:1px solid #e9ecef; border-radius:6px; background:#fafafa;">
+        <div id="zoom-target" style="transform-origin:0 0; will-change:transform;">
             {card_html}
         </div>
     </div>
     <script>
-        var scale = 1.0;
-        function applyZoom() {{
-            document.getElementById('zoom-target').style.transform = 'scale(' + scale + ')';
-            document.getElementById('zoom-level').innerText = Math.round(scale * 100) + '%';
-        }}
-        function zoomIn() {{ scale = Math.min(scale + 0.15, 2.5); applyZoom(); }}
-        function zoomOut() {{ scale = Math.max(scale - 0.15, 0.5); applyZoom(); }}
-        function zoomReset() {{ scale = 1.0; applyZoom(); }}
+        (function() {{
+            var area = document.getElementById('pinch-area');
+            var target = document.getElementById('zoom-target');
+            var scale = 1, offsetX = 0, offsetY = 0;
+            var fitScale = 1;
+            var startDist = 0, startScale = 1, startMidX = 0, startMidY = 0, startOffX = 0, startOffY = 0;
+            var startPanX = 0, startPanY = 0, panStartOffX = 0, panStartOffY = 0;
+            var lastTapTime = 0;
+
+            function apply() {{
+                target.style.transform = 'translate(' + offsetX + 'px,' + offsetY + 'px) scale(' + scale + ')';
+            }}
+
+            function dist(t0, t1) {{
+                var dx = t1.clientX - t0.clientX, dy = t1.clientY - t0.clientY;
+                return Math.sqrt(dx * dx + dy * dy);
+            }}
+
+            function clampScale(s) {{
+                return Math.min(Math.max(s, fitScale * 0.6), fitScale * 4.5);
+            }}
+
+            function fitToWidth() {{
+                var contentWidth = target.scrollWidth;
+                if (contentWidth > 0) {{
+                    fitScale = Math.min(area.clientWidth / contentWidth, 1);
+                    scale = fitScale;
+                    offsetX = 0;
+                    offsetY = 0;
+                    apply();
+                }}
+            }}
+            setTimeout(fitToWidth, 120);
+            window.addEventListener('resize', fitToWidth);
+
+            area.addEventListener('touchstart', function(e) {{
+                if (e.touches.length === 2) {{
+                    var rect = area.getBoundingClientRect();
+                    startDist = dist(e.touches[0], e.touches[1]);
+                    startScale = scale;
+                    startMidX = (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left;
+                    startMidY = (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top;
+                    startOffX = offsetX;
+                    startOffY = offsetY;
+                }} else if (e.touches.length === 1) {{
+                    startPanX = e.touches[0].clientX;
+                    startPanY = e.touches[0].clientY;
+                    panStartOffX = offsetX;
+                    panStartOffY = offsetY;
+
+                    var now = Date.now();
+                    if (now - lastTapTime < 300) {{
+                        scale = fitScale; offsetX = 0; offsetY = 0; apply();
+                    }}
+                    lastTapTime = now;
+                }}
+            }}, {{ passive: true }});
+
+            area.addEventListener('touchmove', function(e) {{
+                e.preventDefault();
+                if (e.touches.length === 2) {{
+                    var newDist = dist(e.touches[0], e.touches[1]);
+                    var newScale = clampScale(startScale * (newDist / startDist));
+                    var ratio = newScale / startScale;
+                    offsetX = startMidX - (startMidX - startOffX) * ratio;
+                    offsetY = startMidY - (startMidY - startOffY) * ratio;
+                    scale = newScale;
+                    apply();
+                }} else if (e.touches.length === 1) {{
+                    offsetX = panStartOffX + (e.touches[0].clientX - startPanX);
+                    offsetY = panStartOffY + (e.touches[0].clientY - startPanY);
+                    apply();
+                }}
+            }}, {{ passive: false }});
+
+            // 마우스(PC)용 폴백: 더블클릭으로 확대/축소 토글
+            area.addEventListener('dblclick', function() {{
+                if (scale <= fitScale + 0.01) {{ scale = fitScale * 1.8; }} else {{ scale = fitScale; offsetX = 0; offsetY = 0; }}
+                apply();
+            }});
+        }})();
     </script>
     """
-    components.html(component_html, height=height, scrolling=True)
+    components.html(component_html, height=box_height + 40, scrolling=False)
 
 
 def render_image_download_button(card_html: str, filename: str):
