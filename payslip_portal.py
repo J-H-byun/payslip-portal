@@ -117,115 +117,6 @@ def _register_success(login_key: str):
     store[login_key] = {"fails": 0, "locked_until": None}
 
 
-def render_payslip_card_zoomable(card_html: str):
-    """명세서 카드를 '처음엔 전체가 잘림 없이 다 보이는 상태'로 그리고,
-    그 위에 두 손가락 핀치줌 + 한 손가락 드래그로 특정 부분을 확대해서 볼 수 있게 한다.
-    (사진 앱처럼: 평소엔 전체 사진이 다 보이고, 확대하면 그 부분만 크게)"""
-    component_html = f"""
-    <div style="text-align:center; margin-bottom:6px; font-size:12px; color:#868e96;">
-        👆 두 손가락으로 확대·축소 · 손가락으로 이동 · 더블탭으로 원래 크기
-    </div>
-    <div id="pinch-area" style="position:relative; overflow:hidden; touch-action:none; background:#fafafa;">
-        <div id="zoom-target" style="transform-origin:0 0; will-change:transform;">
-            {card_html}
-        </div>
-    </div>
-    <script>
-        (function() {{
-            var area = document.getElementById('pinch-area');
-            var target = document.getElementById('zoom-target');
-            var scale = 1, offsetX = 0, offsetY = 0;
-            var fitScale = 1;
-            var startDist = 0, startScale = 1, startMidX = 0, startMidY = 0, startOffX = 0, startOffY = 0;
-            var startPanX = 0, startPanY = 0, panStartOffX = 0, panStartOffY = 0;
-            var lastTapTime = 0;
-
-            function apply() {{
-                target.style.transform = 'translate(' + offsetX + 'px,' + offsetY + 'px) scale(' + scale + ')';
-            }}
-
-            function dist(t0, t1) {{
-                var dx = t1.clientX - t0.clientX, dy = t1.clientY - t0.clientY;
-                return Math.sqrt(dx * dx + dy * dy);
-            }}
-
-            function clampScale(s) {{
-                return Math.min(Math.max(s, fitScale * 0.9), fitScale * 5);
-            }}
-
-            // 처음엔 카드 전체가 잘리는 부분 없이 폭에 맞춰 보이도록 계산하고,
-            // 화면(박스) 높이도 그 축소된 실제 표시 높이에 딱 맞춰서 빈 공간이 안 생기게 한다.
-            function fitAndSize() {{
-                var contentWidth = target.scrollWidth;
-                var contentHeight = target.scrollHeight;
-                if (contentWidth === 0 || contentHeight === 0) {{ return; }}
-                fitScale = Math.min(area.clientWidth / contentWidth, 1);
-                scale = fitScale;
-                offsetX = 0;
-                offsetY = 0;
-                apply();
-
-                var visualHeight = Math.ceil(contentHeight * fitScale);
-                area.style.height = visualHeight + 'px';
-                try {{
-                    window.frameElement.style.height = (visualHeight + 34) + 'px';
-                }} catch (e) {{ /* 접근 불가 시 무시 */ }}
-            }}
-            setTimeout(fitAndSize, 150);
-            window.addEventListener('resize', fitAndSize);
-
-            area.addEventListener('touchstart', function(e) {{
-                if (e.touches.length === 2) {{
-                    var rect = area.getBoundingClientRect();
-                    startDist = dist(e.touches[0], e.touches[1]);
-                    startScale = scale;
-                    startMidX = (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left;
-                    startMidY = (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top;
-                    startOffX = offsetX;
-                    startOffY = offsetY;
-                }} else if (e.touches.length === 1) {{
-                    startPanX = e.touches[0].clientX;
-                    startPanY = e.touches[0].clientY;
-                    panStartOffX = offsetX;
-                    panStartOffY = offsetY;
-
-                    var now = Date.now();
-                    if (now - lastTapTime < 300) {{
-                        scale = fitScale; offsetX = 0; offsetY = 0; apply();
-                    }}
-                    lastTapTime = now;
-                }}
-            }}, {{ passive: true }});
-
-            area.addEventListener('touchmove', function(e) {{
-                e.preventDefault();
-                if (e.touches.length === 2) {{
-                    var newDist = dist(e.touches[0], e.touches[1]);
-                    var newScale = clampScale(startScale * (newDist / startDist));
-                    var ratio = newScale / startScale;
-                    offsetX = startMidX - (startMidX - startOffX) * ratio;
-                    offsetY = startMidY - (startMidY - startOffY) * ratio;
-                    scale = newScale;
-                    apply();
-                }} else if (e.touches.length === 1 && scale > fitScale + 0.01) {{
-                    // 확대된 상태에서만 한 손가락 이동(패닝) 허용 — 기본 상태에선 이동할 필요가 없음
-                    offsetX = panStartOffX + (e.touches[0].clientX - startPanX);
-                    offsetY = panStartOffY + (e.touches[0].clientY - startPanY);
-                    apply();
-                }}
-            }}, {{ passive: false }});
-
-            // 마우스(PC)용 폴백: 더블클릭으로 확대/축소 토글
-            area.addEventListener('dblclick', function() {{
-                if (scale <= fitScale + 0.01) {{ scale = fitScale * 1.8; }} else {{ scale = fitScale; offsetX = 0; offsetY = 0; }}
-                apply();
-            }});
-        }})();
-    </script>
-    """
-    # 최초 렌더링 높이는 넉넉하게 잡아두고, 로드 직후 JS가 실제 필요한 높이로 즉시 줄여준다
-    components.html(component_html, height=1400, scrolling=False)
-
 
 def render_image_download_button(card_html: str, filename: str):
     """명세서 카드를 PNG 이미지로 변환해서 다운로드하는 버튼을 그린다.
@@ -349,15 +240,9 @@ else:
             st.rerun()
 
     card_html, full_html = build_payslip_full_html(member_key, data[member_key], pay_year, pay_month)
-    render_payslip_card_zoomable(card_html)
+    st.markdown(card_html, unsafe_allow_html=True)
 
-    st.download_button(
-        "📥 이 명세서 다운로드 (HTML, 브라우저에서 열어 'Ctrl+P'로 PDF 저장 가능)",
-        data=full_html.encode("utf-8"),
-        file_name=f"{member_key[:-6]}_급여명세서_{pay_year}{pay_month:02d}.html",
-        mime="text/html",
-        use_container_width=True,
-    )
+    st.caption("📌 화면이 작게 보이면, 아래 '이미지로 저장'을 눌러 받은 사진으로 확인하시는 걸 권장합니다.")
 
     render_image_download_button(
         card_html,
