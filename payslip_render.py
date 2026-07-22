@@ -27,8 +27,9 @@ def build_payslip_card_html(member_key: str, data: dict, pay_year: int, pay_mont
         data["국민연금"] + data["건강보험"] + data["요양보험"]
         + data["고용보험"] + data["소득세"] + data["지방소득세"]
     )
-    _m_field = data["국비_실지급액"] + data["도비_실지급액"] + data["시비_실지급액"]
-    net_pay = _m_field + data["공휴일수당"]
+    # 차인지급액(실수령액) = 지급액 계 - 공제액 계.
+    # (예전 방식은 재원별 실지급액 + 공휴일수당만 더해서, ④가산수당·⑤교통비가 누락되는 오류가 있었음 -> 수정)
+    net_pay = total_pay - total_deduct
     _guk_net = data["국비_실지급액"]
     _do_net = data["도비_실지급액"]
     _si_net = data["시비_실지급액"]
