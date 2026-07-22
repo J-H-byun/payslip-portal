@@ -12,8 +12,9 @@
 """
 
 
-def build_payslip_card_html(member_key: str, data: dict, pay_year: int, pay_month: int) -> str:
-    """명세서 카드(HTML 조각)를 만든다. member_key는 '이름+생년월일6자리' 형식(예: 홍길동641107)."""
+def build_payslip_card_html(member_key: str, data: dict, pay_year: int, pay_month: int, pay_date_str: str = None) -> str:
+    """명세서 카드(HTML 조각)를 만든다. member_key는 '이름+생년월일6자리' 형식(예: 홍길동641107).
+    pay_date_str: 실제 임금지급일(예: '2026-08-25'). 미제공 시 '-'로 표시(근로기준법 시행령 27조의2 3호 기재사항)."""
     total_pay = (
         data["기본급"] + data["주휴수당"]
         + (data["국비_할증"] + data["도비_할증"] + data["시비_할증"])
@@ -30,7 +31,8 @@ def build_payslip_card_html(member_key: str, data: dict, pay_year: int, pay_mont
     _si_net = data["시비_실지급액"]
 
     payslip_card_html = f"""
-    <div style="background-color:#ffffff; padding:25px; border:2px solid #dee2e6; border-radius:6px; color:#212529; font-family:'Malgun Gothic';">
+    <div style="overflow-x:auto; -webkit-overflow-scrolling:touch;">
+    <div style="background-color:#ffffff; padding:25px; border:2px solid #dee2e6; border-radius:6px; color:#212529; font-family:'Malgun Gothic'; min-width:480px;">
         <h3 style="text-align:center; margin-bottom:5px;">{pay_year}년 {pay_month}월 급여 명세서</h3>
         <p style="text-align:center; font-size:12px; color:#868e96; margin-bottom:20px;">(사)창원시장애인부모회</p>
         <table style="width:100%; border-collapse:collapse; margin-bottom:15px; font-size:13px;">
@@ -46,30 +48,40 @@ def build_payslip_card_html(member_key: str, data: dict, pay_year: int, pay_mont
                 <th style="border:1px solid #dee2e6; padding:6px;">총 근로시간</th>
                 <td style="border:1px solid #dee2e6; padding:6px; text-align:center; font-size:12px;">{data["국비시간"]+data["도비시간"]+data["시비시간"]+data["국비할증시간"]+data["도비할증시간"]+data["시비할증시간"]:.1f}H (국:{data["국비시간"]+data["국비할증시간"]:.1f}/도:{data["도비시간"]+data["도비할증시간"]:.1f}/시:{data["시비시간"]+data["시비할증시간"]:.1f})</td>
             </tr>
+            <tr style="background-color:#f8f9fa;">
+                <th style="border:1px solid #dee2e6; padding:6px;">기본근로시간</th>
+                <td style="border:1px solid #dee2e6; padding:6px; text-align:center;">{data["국비시간"]+data["도비시간"]+data["시비시간"]:.1f}H</td>
+                <th style="border:1px solid #dee2e6; padding:6px;">할증근로시간<br><span style="font-weight:normal; font-size:10px;">(연장·야간·휴일)</span></th>
+                <td style="border:1px solid #dee2e6; padding:6px; text-align:center;">{data["국비할증시간"]+data["도비할증시간"]+data["시비할증시간"]:.1f}H</td>
+            </tr>
+            <tr style="background-color:#f8f9fa;">
+                <th style="border:1px solid #dee2e6; padding:6px;">임금지급일</th>
+                <td style="border:1px solid #dee2e6; padding:6px; text-align:center; font-weight:bold;" colspan="3">{pay_date_str if pay_date_str else "-"}</td>
+            </tr>
         </table>
         <div style="display:flex; gap:15px;">
             <div style="flex:1;">
                 <div style="background-color:#e3faf2; padding:5px; text-align:center; font-weight:bold; border:1px solid #c3fae8; color:#0ca678; font-size:13px;">■ 지 급 내 역</div>
                 <table style="width:100%; border-collapse:collapse; font-size:12px;">
-                    <tr><th style="border:1px solid #dee2e6; padding:6px; text-align:left; background-color:#f8f9fa;">① 기본급 (재원통합)</th><td style="border:1px solid #dee2e6; padding:6px; text-align:right;">{data["기본급"]:,} 원</td></tr>
-                    <tr><th style="border:1px solid #dee2e6; padding:6px; text-align:left; background-color:#f8f9fa;">② 주휴수당</th><td style="border:1px solid #dee2e6; padding:6px; text-align:right;">{data["주휴수당"]:,} 원</td></tr>
-                    <tr><th style="border:1px solid #dee2e6; padding:6px; text-align:left; background-color:#f8f9fa;">③ 할증(가산근로)</th><td style="border:1px solid #dee2e6; padding:6px; text-align:right;">{data["국비_할증"]+data["도비_할증"]+data["시비_할증"]:,} 원</td></tr>
-                    <tr><th style="border:1px solid #dee2e6; padding:6px; text-align:left; background-color:#f8f9fa;">④ 가산수당</th><td style="border:1px solid #dee2e6; padding:6px; text-align:right;">{data["gasan_raw"]:,} 원</td></tr>
-                    <tr><th style="border:1px solid #dee2e6; padding:6px; text-align:left; background-color:#f8f9fa;">⑤ 교통비 (국비+도비)</th><td style="border:1px solid #dee2e6; padding:6px; text-align:right;">{data["교통비"]:,} 원</td></tr>
-                    <tr><th style="border:1px solid #dee2e6; padding:6px; text-align:left; background-color:#f8f9fa;">⑥ 법정공휴일 수당</th><td style="border:1px solid #dee2e6; padding:6px; text-align:right;">{data["공휴일수당"]:,} 원</td></tr>
-                    <tr style="background-color:#f1f3f5; font-weight:bold;"><td style="border:1px solid #dee2e6; padding:7px;">지급액 계</td><td style="border:1px solid #dee2e6; padding:7px; text-align:right;">{total_pay:,} 원</td></tr>
+                    <tr><th style="border:1px solid #dee2e6; padding:6px; text-align:left; background-color:#f8f9fa;">① 기본급 (재원통합)</th><td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap;">{data["기본급"]:,} 원</td></tr>
+                    <tr><th style="border:1px solid #dee2e6; padding:6px; text-align:left; background-color:#f8f9fa;">② 주휴수당</th><td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap;">{data["주휴수당"]:,} 원</td></tr>
+                    <tr><th style="border:1px solid #dee2e6; padding:6px; text-align:left; background-color:#f8f9fa;">③ 할증(가산근로)</th><td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap;">{data["국비_할증"]+data["도비_할증"]+data["시비_할증"]:,} 원</td></tr>
+                    <tr><th style="border:1px solid #dee2e6; padding:6px; text-align:left; background-color:#f8f9fa;">④ 가산수당</th><td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap;">{data["gasan_raw"]:,} 원</td></tr>
+                    <tr><th style="border:1px solid #dee2e6; padding:6px; text-align:left; background-color:#f8f9fa;">⑤ 교통비 (국비+도비)</th><td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap;">{data["교통비"]:,} 원</td></tr>
+                    <tr><th style="border:1px solid #dee2e6; padding:6px; text-align:left; background-color:#f8f9fa;">⑥ 법정공휴일 수당</th><td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap;">{data["공휴일수당"]:,} 원</td></tr>
+                    <tr style="background-color:#f1f3f5; font-weight:bold;"><td style="border:1px solid #dee2e6; padding:7px;">지급액 계</td><td style="border:1px solid #dee2e6; padding:7px; text-align:right; white-space:nowrap;">{total_pay:,} 원</td></tr>
                 </table>
             </div>
             <div style="flex:1;">
                 <div style="background-color:#fff5f5; padding:5px; text-align:center; font-weight:bold; border:1px solid #ffe3e3; color:#e03131; font-size:13px;">■ 공 제 내 역</div>
                 <table style="width:100%; border-collapse:collapse; font-size:12px;">
-                    <tr><th style="border:1px solid #dee2e6; padding:6px; text-align:left; background-color:#f8f9fa;">국민연금</th><td style="border:1px solid #dee2e6; padding:6px; text-align:right;">{data["국민연금"]:,} 원</td></tr>
-                    <tr><th style="border:1px solid #dee2e6; padding:6px; text-align:left; background-color:#f8f9fa;">건강보험</th><td style="border:1px solid #dee2e6; padding:6px; text-align:right;">{data["건강보험"]:,} 원</td></tr>
-                    <tr><th style="border:1px solid #dee2e6; padding:6px; text-align:left; background-color:#f8f9fa;">장기요양보험</th><td style="border:1px solid #dee2e6; padding:6px; text-align:right;">{data["요양보험"]:,} 원</td></tr>
-                    <tr><th style="border:1px solid #dee2e6; padding:6px; text-align:left; background-color:#f8f9fa;">고용보험</th><td style="border:1px solid #dee2e6; padding:6px; text-align:right;">{data["고용보험"]:,} 원</td></tr>
-                    <tr><th style="border:1px solid #dee2e6; padding:6px; text-align:left; background-color:#f8f9fa;">소득세 (원천세)</th><td style="border:1px solid #dee2e6; padding:6px; text-align:right;">{data["소득세"]:,} 원</td></tr>
-                    <tr><th style="border:1px solid #dee2e6; padding:6px; text-align:left; background-color:#f8f9fa;">지방소득세</th><td style="border:1px solid #dee2e6; padding:6px; text-align:right;">{data["지방소득세"]:,} 원</td></tr>
-                    <tr style="background-color:#f1f3f5; font-weight:bold;"><td style="border:1px solid #dee2e6; padding:7px;">공제액 계</td><td style="border:1px solid #dee2e6; padding:7px; text-align:right; color:#e03131;">{total_deduct:,} 원</td></tr>
+                    <tr><th style="border:1px solid #dee2e6; padding:6px; text-align:left; background-color:#f8f9fa;">국민연금</th><td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap;">{data["국민연금"]:,} 원</td></tr>
+                    <tr><th style="border:1px solid #dee2e6; padding:6px; text-align:left; background-color:#f8f9fa;">건강보험</th><td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap;">{data["건강보험"]:,} 원</td></tr>
+                    <tr><th style="border:1px solid #dee2e6; padding:6px; text-align:left; background-color:#f8f9fa;">장기요양보험</th><td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap;">{data["요양보험"]:,} 원</td></tr>
+                    <tr><th style="border:1px solid #dee2e6; padding:6px; text-align:left; background-color:#f8f9fa;">고용보험</th><td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap;">{data["고용보험"]:,} 원</td></tr>
+                    <tr><th style="border:1px solid #dee2e6; padding:6px; text-align:left; background-color:#f8f9fa;">소득세 (원천세)</th><td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap;">{data["소득세"]:,} 원</td></tr>
+                    <tr><th style="border:1px solid #dee2e6; padding:6px; text-align:left; background-color:#f8f9fa;">지방소득세</th><td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap;">{data["지방소득세"]:,} 원</td></tr>
+                    <tr style="background-color:#f1f3f5; font-weight:bold;"><td style="border:1px solid #dee2e6; padding:7px;">공제액 계</td><td style="border:1px solid #dee2e6; padding:7px; text-align:right; white-space:nowrap; color:#e03131;">{total_deduct:,} 원</td></tr>
                 </table>
             </div>
         </div>
@@ -91,38 +103,38 @@ def build_payslip_card_html(member_key: str, data: dict, pay_year: int, pay_mont
             </tr>
             <tr>
                 <th style="border:1px solid #dee2e6; padding:6px; text-align:left; background-color:#f8f9fa;">기본급(연차 미포함)</th>
-                <td style="border:1px solid #dee2e6; padding:6px; text-align:right;">{data["국비_기본급"]:,}</td>
-                <td style="border:1px solid #dee2e6; padding:6px; text-align:right;">{data["도비_기본급"]:,}</td>
-                <td style="border:1px solid #dee2e6; padding:6px; text-align:right;">{data["시비_기본급"]:,}</td>
-                <td style="border:1px solid #dee2e6; padding:6px; text-align:right; font-weight:bold;">{data["국비_기본급"]+data["도비_기본급"]+data["시비_기본급"]:,}</td>
+                <td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap;">{data["국비_기본급"]:,}</td>
+                <td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap;">{data["도비_기본급"]:,}</td>
+                <td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap;">{data["시비_기본급"]:,}</td>
+                <td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap; font-weight:bold;">{data["국비_기본급"]+data["도비_기본급"]+data["시비_기본급"]:,}</td>
             </tr>
             <tr>
                 <th style="border:1px solid #dee2e6; padding:6px; text-align:left; background-color:#f8f9fa;">주휴수당</th>
-                <td style="border:1px solid #dee2e6; padding:6px; text-align:right;">{data["국비_주휴수당"]:,}</td>
-                <td style="border:1px solid #dee2e6; padding:6px; text-align:right;">{data["도비_주휴수당"]:,}</td>
-                <td style="border:1px solid #dee2e6; padding:6px; text-align:right;">{data["시비_주휴수당"]:,}</td>
-                <td style="border:1px solid #dee2e6; padding:6px; text-align:right; font-weight:bold;">{data["국비_주휴수당"]+data["도비_주휴수당"]+data["시비_주휴수당"]:,}</td>
+                <td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap;">{data["국비_주휴수당"]:,}</td>
+                <td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap;">{data["도비_주휴수당"]:,}</td>
+                <td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap;">{data["시비_주휴수당"]:,}</td>
+                <td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap; font-weight:bold;">{data["국비_주휴수당"]+data["도비_주휴수당"]+data["시비_주휴수당"]:,}</td>
             </tr>
             <tr>
                 <th style="border:1px solid #dee2e6; padding:6px; text-align:left; background-color:#f8f9fa;">휴일·심야근로</th>
-                <td style="border:1px solid #dee2e6; padding:6px; text-align:right;">{data["국비_할증"]:,}</td>
-                <td style="border:1px solid #dee2e6; padding:6px; text-align:right;">{data["도비_할증"]:,}</td>
-                <td style="border:1px solid #dee2e6; padding:6px; text-align:right;">{data["시비_할증"]:,}</td>
-                <td style="border:1px solid #dee2e6; padding:6px; text-align:right; font-weight:bold;">{data["국비_할증"]+data["도비_할증"]+data["시비_할증"]:,}</td>
+                <td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap;">{data["국비_할증"]:,}</td>
+                <td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap;">{data["도비_할증"]:,}</td>
+                <td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap;">{data["시비_할증"]:,}</td>
+                <td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap; font-weight:bold;">{data["국비_할증"]+data["도비_할증"]+data["시비_할증"]:,}</td>
             </tr>
             <tr>
                 <th style="border:1px solid #dee2e6; padding:6px; text-align:left; background-color:#f8f9fa;">연차수당</th>
-                <td style="border:1px solid #dee2e6; padding:6px; text-align:right;">{data["국비_연차수당"]:,}</td>
-                <td style="border:1px solid #dee2e6; padding:6px; text-align:right;">{data["도비_연차수당"]:,}</td>
-                <td style="border:1px solid #dee2e6; padding:6px; text-align:right;">{data["시비_연차수당"]:,}</td>
-                <td style="border:1px solid #dee2e6; padding:6px; text-align:right; font-weight:bold;">{data["국비_연차수당"]+data["도비_연차수당"]+data["시비_연차수당"]:,}</td>
+                <td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap;">{data["국비_연차수당"]:,}</td>
+                <td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap;">{data["도비_연차수당"]:,}</td>
+                <td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap;">{data["시비_연차수당"]:,}</td>
+                <td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap; font-weight:bold;">{data["국비_연차수당"]+data["도비_연차수당"]+data["시비_연차수당"]:,}</td>
             </tr>
             <tr style="background-color:#f1f3f5;">
                 <th style="border:1px solid #dee2e6; padding:6px; text-align:left;">실지급액</th>
-                <td style="border:1px solid #dee2e6; padding:6px; text-align:right; font-weight:bold;">{_guk_net:,}</td>
-                <td style="border:1px solid #dee2e6; padding:6px; text-align:right; font-weight:bold;">{_do_net:,}</td>
-                <td style="border:1px solid #dee2e6; padding:6px; text-align:right; font-weight:bold;">{_si_net:,}</td>
-                <td style="border:1px solid #dee2e6; padding:6px; text-align:right; font-weight:bold;">{_guk_net+_do_net+_si_net:,}</td>
+                <td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap; font-weight:bold;">{_guk_net:,}</td>
+                <td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap; font-weight:bold;">{_do_net:,}</td>
+                <td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap; font-weight:bold;">{_si_net:,}</td>
+                <td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap; font-weight:bold;">{_guk_net+_do_net+_si_net:,}</td>
             </tr>
         </table>
         <div style="margin-top:15px; background-color:#f1f3f5; padding:5px; display:flex; justify-content:space-between; font-size:12px;">
@@ -139,13 +151,14 @@ def build_payslip_card_html(member_key: str, data: dict, pay_year: int, pay_mont
             <tr><th style="border:1px solid #dee2e6; padding:5px; text-align:left; background-color:#f8f9fa;">⑥ 법정공휴일 수당</th><td style="border:1px solid #dee2e6; padding:5px;"><i>(기본급 시급 × 공휴일 근로시간 × 1.5) + (기본급 × 일일 소정근로시간) − 휴일 산정임금</i></td></tr>
         </table>
     </div>
+    </div>
     """
     return payslip_card_html
 
 
-def build_payslip_full_html(member_key: str, data: dict, pay_year: int, pay_month: int):
+def build_payslip_full_html(member_key: str, data: dict, pay_year: int, pay_month: int, pay_date_str: str = None):
     """(카드 HTML, 다운로드용 완전한 HTML 문서) 튜플을 반환한다."""
-    payslip_card_html = build_payslip_card_html(member_key, data, pay_year, pay_month)
+    payslip_card_html = build_payslip_card_html(member_key, data, pay_year, pay_month, pay_date_str)
 
     payslip_full_html = f"""<!DOCTYPE html>
 <html lang="ko">
