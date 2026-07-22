@@ -17,11 +17,10 @@ import time
 import datetime
 
 import streamlit as st
-import streamlit.components.v1 as components
 import gspread
 from google.oauth2.service_account import Credentials
 
-from payslip_render import build_payslip_full_html
+from payslip_render import build_payslip_full_html, render_image_download_button
 
 # =================================================================
 # ⚙️ 설정
@@ -146,47 +145,6 @@ def _register_success(login_key: str):
     store = _login_attempt_store()
     store[login_key] = {"fails": 0, "locked_until": None}
 
-
-
-def render_image_download_button(card_html: str, filename: str):
-    """명세서 카드를 PNG 이미지로 변환해서 다운로드하는 버튼을 그린다.
-    브라우저 자체 기능(html2canvas)으로 변환하므로 서버 쪽에 별도 프로그램 설치가 필요 없다.
-    (모바일에서 다운로드하면 보통 '다운로드' 폴더나 갤러리 앱에서 바로 확인 가능)"""
-    safe_filename = json.dumps(filename)  # JS 문자열 리터럴로 안전하게 넣기 위해 이스케이프
-    component_html = f"""
-    <div style="text-align:center;">
-        <button id="save-img-btn" style="
-            width:100%; padding:12px; font-size:15px; font-weight:600;
-            background-color:#0ca678; color:white; border:none; border-radius:6px;
-            cursor:pointer;">
-            🖼️ 이미지로 저장 (PNG, 갤러리에 바로 보관 가능)
-        </button>
-        <div id="save-img-status" style="margin-top:8px; font-size:12px; color:#868e96;"></div>
-    </div>
-    <div id="capture-wrapper" style="position:absolute; left:-9999px; top:-9999px; width:800px;">
-        {card_html}
-    </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script>
-        document.getElementById('save-img-btn').addEventListener('click', function() {{
-            var statusEl = document.getElementById('save-img-status');
-            statusEl.innerText = '이미지 생성 중...';
-            html2canvas(document.getElementById('capture-wrapper'), {{
-                scale: 2,
-                backgroundColor: '#ffffff'
-            }}).then(function(canvas) {{
-                var link = document.createElement('a');
-                link.download = {safe_filename};
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-                statusEl.innerText = '다운로드 완료! (갤러리/다운로드 폴더 확인)';
-            }}).catch(function(err) {{
-                statusEl.innerText = '이미지 생성 실패: ' + err;
-            }});
-        }});
-    </script>
-    """
-    components.html(component_html, height=110)
 
 
 # =================================================================
