@@ -32,7 +32,7 @@ def build_payslip_card_html(member_key: str, data: dict, pay_year: int, pay_mont
 
     payslip_card_html = f"""
     <div style="overflow-x:auto; -webkit-overflow-scrolling:touch;">
-    <div style="background-color:#ffffff; padding:25px; border:2px solid #dee2e6; border-radius:6px; color:#212529; font-family:'Malgun Gothic'; min-width:480px;">
+    <div class="ps-card" style="background-color:#ffffff; padding:25px; border:2px solid #dee2e6; border-radius:6px; color:#212529; font-family:'Malgun Gothic'; min-width:480px;">
         <h3 style="text-align:center; margin-bottom:5px;">{pay_year}년 {pay_month}월 급여 명세서</h3>
         <p style="text-align:center; font-size:12px; color:#868e96; margin-bottom:20px;">(사)창원시장애인부모회</p>
         <table style="width:100%; border-collapse:collapse; margin-bottom:15px; font-size:13px;">
@@ -166,11 +166,19 @@ def build_payslip_full_html(member_key: str, data: dict, pay_year: int, pay_mont
 <meta charset="UTF-8">
 <title>{member_key[:-6]}_급여명세서</title>
 <style>
-    @page {{ size: A4; margin: 12mm; }}
+    @page {{ size: A4; margin: 7mm; }}
     body {{ margin: 0; padding: 16px; background:#f1f3f5; font-family:'Malgun Gothic', sans-serif; }}
     @media print {{
         body {{ background:#ffffff; padding:0; }}
-        .print-wrap {{ box-shadow:none !important; }}
+        .print-wrap {{ box-shadow:none !important; max-width:100% !important; }}
+        /* A4 한 페이지 안에 들어가도록 화면용 여백/글자크기를 인쇄 시에만 압축 (화면에서 보는 모습엔 영향 없음) */
+        .ps-card {{ padding:10px !important; min-width:0 !important; }}
+        .ps-card table {{ font-size:11px !important; }}
+        .ps-card td, .ps-card th {{ padding:3px 5px !important; line-height:1.25 !important; }}
+        .ps-card h3 {{ margin-bottom:2px !important; font-size:17px !important; }}
+        .ps-card > div[style*="margin-top"] {{ margin-top:6px !important; }}
+        .ps-card div[style*="padding:10px"] {{ padding:5px 8px !important; }}
+        .ps-card div[style*="padding:5px"] {{ padding:3px !important; }}
     }}
     .print-wrap {{ max-width: 800px; margin: 0 auto; }}
 </style>
