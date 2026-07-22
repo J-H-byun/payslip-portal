@@ -84,7 +84,8 @@ def load_snapshot():
     pay_year = int(meta[0])
     pay_month = int(meta[1])
     updated_at = meta[2] if len(meta) > 2 else "-"
-    return data, norm_index, pay_year, pay_month, updated_at
+    pay_date_str = meta[5] if len(meta) > 5 else None
+    return data, norm_index, pay_year, pay_month, updated_at, pay_date_str
 
 
 # =================================================================
@@ -196,7 +197,7 @@ if st.session_state["authed_member"] is None:
                 st.error(f"🔒 5회 연속 조회 실패로 잠겼습니다. {mm}분 {ss}초 후 다시 시도해주세요.")
             else:
                 try:
-                    data, norm_index, pay_year, pay_month, updated_at = load_snapshot()
+                    data, norm_index, pay_year, pay_month, updated_at, pay_date_str = load_snapshot()
                 except Exception as e:
                     st.error("데이터를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.")
                     st.caption(f"(관리자 확인용: {e})")
@@ -218,7 +219,7 @@ else:
     member_key = st.session_state["authed_member"]
 
     try:
-        data, norm_index, pay_year, pay_month, updated_at = load_snapshot()
+        data, norm_index, pay_year, pay_month, updated_at, pay_date_str = load_snapshot()
     except Exception as e:
         st.error("데이터를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.")
         st.caption(f"(관리자 확인용: {e})")
@@ -239,7 +240,7 @@ else:
             st.session_state["authed_member"] = None
             st.rerun()
 
-    card_html, full_html = build_payslip_full_html(member_key, data[member_key], pay_year, pay_month)
+    card_html, full_html = build_payslip_full_html(member_key, data[member_key], pay_year, pay_month, pay_date_str)
     st.markdown(card_html, unsafe_allow_html=True)
 
     st.caption("📌 화면이 작게 보이면, 아래 '이미지로 저장'을 눌러 받은 사진으로 확인하시는 걸 권장합니다.")
