@@ -34,8 +34,23 @@ def build_payslip_card_html(member_key: str, data: dict, pay_year: int, pay_mont
     _si_net = data["시비_실지급액"]
 
     payslip_card_html = f"""
+    <style>
+        .ps-card {{ min-width: 0; }}
+        @media (max-width: 480px) {{
+            .ps-card {{ padding: 12px !important; }}
+            .ps-card table {{ font-size: 11px !important; }}
+            .ps-card td, .ps-card th {{ padding: 4px 3px !important; }}
+            .ps-card h3 {{ font-size: 18px !important; }}
+        }}
+        @media (max-width: 380px) {{
+            .ps-card {{ padding: 8px !important; }}
+            .ps-card table {{ font-size: 9.5px !important; }}
+            .ps-card td, .ps-card th {{ padding: 3px 2px !important; }}
+            .ps-card h3 {{ font-size: 16px !important; }}
+        }}
+    </style>
     <div style="overflow-x:auto; -webkit-overflow-scrolling:touch;">
-    <div class="ps-card" style="background-color:#ffffff; padding:25px; border:2px solid #dee2e6; border-radius:6px; color:#212529; font-family:'Malgun Gothic'; min-width:480px;">
+    <div class="ps-card" style="background-color:#ffffff; padding:25px; border:2px solid #dee2e6; border-radius:6px; color:#212529; font-family:'Malgun Gothic';">
         <h3 style="text-align:center; margin-bottom:5px;">{pay_year}년 {pay_month}월 급여 명세서</h3>
         <p style="text-align:center; font-size:12px; color:#868e96; margin-bottom:20px;">(사)창원시장애인부모회</p>
         <table style="width:100%; border-collapse:collapse; margin-bottom:15px; font-size:13px;">
