@@ -11,6 +11,9 @@
 (포털에서 "보는 시점"이 아니라 "스냅샷을 만든 시점" 기준 급여월을 보여줘야 하기 때문입니다.)
 """
 
+import json
+import streamlit.components.v1 as components
+
 
 def build_payslip_card_html(member_key: str, data: dict, pay_year: int, pay_month: int, pay_date_str: str = None) -> str:
     """명세서 카드(HTML 조각)를 만든다. member_key는 '이름+생년월일6자리' 형식(예: 홍길동641107).
@@ -190,3 +193,44 @@ def build_payslip_full_html(member_key: str, data: dict, pay_year: int, pay_mont
 </body>
 </html>"""
     return payslip_card_html, payslip_full_html
+
+
+def render_image_download_button(card_html: str, filename: str, button_label: str = "🖼️ 이미지로 저장 (PNG, 갤러리에 바로 보관 가능)"):
+    """명세서 카드를 PNG 이미지로 변환해서 다운로드하는 버튼을 그린다.
+    브라우저 자체 기능(html2canvas)으로 변환하므로 서버 쪽에 별도 프로그램(playwright 등) 설치가 필요 없다.
+    -> app_push.py(관리자, 로컬/클라우드 어디서든), payslip_portal.py(포털) 양쪽에서 공통으로 사용."""
+    safe_filename = json.dumps(filename)  # JS 문자열 리터럴로 안전하게 넣기 위해 이스케이프
+    component_html = f"""
+    <div style="text-align:center;">
+        <button id="save-img-btn" style="
+            width:100%; padding:12px; font-size:15px; font-weight:600;
+            background-color:#0ca678; color:white; border:none; border-radius:6px;
+            cursor:pointer;">
+            {button_label}
+        </button>
+        <div id="save-img-status" style="margin-top:8px; font-size:12px; color:#868e96;"></div>
+    </div>
+    <div id="capture-wrapper" style="position:absolute; left:-9999px; top:-9999px; width:800px;">
+        {card_html}
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script>
+        document.getElementById('save-img-btn').addEventListener('click', function() {{
+            var statusEl = document.getElementById('save-img-status');
+            statusEl.innerText = '이미지 생성 중...';
+            html2canvas(document.getElementById('capture-wrapper'), {{
+                scale: 2,
+                backgroundColor: '#ffffff'
+            }}).then(function(canvas) {{
+                var link = document.createElement('a');
+                link.download = {safe_filename};
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                statusEl.innerText = '다운로드 완료! (다운로드 폴더에서 사진뷰어로 열면 인쇄 가능)';
+            }}).catch(function(err) {{
+                statusEl.innerText = '이미지 생성 실패: ' + err;
+            }});
+        }});
+    </script>
+    """
+    components.html(component_html, height=110)
