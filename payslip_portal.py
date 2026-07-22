@@ -88,6 +88,35 @@ def load_snapshot():
     return data, norm_index, pay_year, pay_month, updated_at, pay_date_str
 
 
+@st.cache_data(ttl=300, show_spinner=False)
+def load_history():
+    """'이력' 시트에서 모든 과거 명세서를 읽어와, 사람별로 (연,월) -> 데이터 형태로 정리한다.
+    같은 사람의 같은 달이 여러 번 게시됐으면(정정 등), 나중에 게시된 것을 우선한다.
+    이력 시트가 아직 없으면(관리자가 아직 한 번도 게시 안 한 경우) 빈 딕셔너리를 반환한다."""
+    gc = _get_gspread_client()
+    sh = gc.open_by_url(SNAPSHOT_SHEET_URL)
+    try:
+        ws_hist = sh.worksheet("이력")
+    except gspread.exceptions.WorksheetNotFound:
+        return {}
+
+    rows = ws_hist.get_all_values()[1:]  # 헤더 제외
+    history = {}
+    for row in rows:
+        if len(row) < 5:
+            continue
+        raw_key, y_str, m_str, pay_date, json_data = row[0], row[1], row[2], row[3], row[4]
+        try:
+            y_i, m_i = int(y_str), int(m_str)
+        except ValueError:
+            continue
+        norm_key = "".join(raw_key.split()).upper()
+        history.setdefault(norm_key, {})
+        # 사전 순서대로 뒤에 나온 행이 앞선 행을 덮어씀 -> 시트에 먼저 쌓인 순서라면 "가장 최근 게시분"이 최종 반영됨
+        history[norm_key][(y_i, m_i)] = {"json_data": json_data, "pay_date": pay_date}
+    return history
+
+
 # =================================================================
 # 🔒 로그인 실패 잠금 (앱 프로세스 메모리에 공유 저장, 이름+생년월일 조합 기준)
 # =================================================================
@@ -240,14 +269,40 @@ else:
             st.session_state["authed_member"] = None
             st.rerun()
 
-    card_html, full_html = build_payslip_full_html(member_key, data[member_key], pay_year, pay_month, pay_date_str)
+    # ── 조회할 명세서 선택: 기본은 당월, 원하면 과거 달도 선택 가능 ──
+    try:
+        history = load_history()
+    except Exception:
+        history = {}
+    norm_key = "".join(member_key.split()).upper()
+    member_history = history.get(norm_key, {})
+    past_months = sorted(
+        [(y, m) for (y, m) in member_history.keys() if (y, m) != (pay_year, pay_month)],
+        reverse=True,
+    )
+
+    show_data, show_year, show_month, show_pay_date = data[member_key], pay_year, pay_month, pay_date_str
+
+    if past_months:
+        month_labels = ["당월 (최신)"] + [f"{y}년 {m}월" for (y, m) in past_months]
+        selected_label = st.selectbox("📅 조회할 명세서", month_labels)
+        if selected_label != "당월 (최신)":
+            sel_y, sel_m = [int(x) for x in selected_label.replace("년", "").replace("월", "").split()]
+            rec = member_history[(sel_y, sel_m)]
+            try:
+                show_data = json.loads(rec["json_data"])
+                show_year, show_month, show_pay_date = sel_y, sel_m, rec["pay_date"]
+            except json.JSONDecodeError:
+                st.warning("해당 월 데이터를 불러오지 못했습니다. 당월 명세서를 표시합니다.")
+
+    card_html, full_html = build_payslip_full_html(member_key, show_data, show_year, show_month, show_pay_date)
     st.markdown(card_html, unsafe_allow_html=True)
 
     st.caption("📌 화면이 작게 보이면, 아래 '이미지로 저장'을 눌러 받은 사진으로 확인하시는 걸 권장합니다.")
 
     render_image_download_button(
         card_html,
-        f"{member_key[:-6]}_급여명세서_{pay_year}{pay_month:02d}.png",
+        f"{member_key[:-6]}_급여명세서_{show_year}{show_month:02d}.png",
     )
 
     st.caption(f"조회 시각: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
