@@ -219,7 +219,7 @@ def render_image_download_button(card_html: str, filename: str, button_label: st
             var statusEl = document.getElementById('save-img-status');
             statusEl.innerText = '이미지 생성 중...';
             html2canvas(document.getElementById('capture-wrapper'), {{
-                scale: 2,
+                scale: 3,
                 backgroundColor: '#ffffff'
             }}).then(function(canvas) {{
                 var link = document.createElement('a');
