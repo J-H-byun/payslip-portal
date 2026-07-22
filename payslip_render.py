@@ -27,12 +27,12 @@ def build_payslip_card_html(member_key: str, data: dict, pay_year: int, pay_mont
         data["국민연금"] + data["건강보험"] + data["요양보험"]
         + data["고용보험"] + data["소득세"] + data["지방소득세"]
     )
-    # 차인지급액(실수령액) = 지급액 계 - 공제액 계.
-    # (예전 방식은 재원별 실지급액 + 공휴일수당만 더해서, ④가산수당·⑤교통비가 누락되는 오류가 있었음 -> 수정)
-    net_pay = total_pay - total_deduct
     _guk_net = data["국비_실지급액"]
     _do_net = data["도비_실지급액"]
     _si_net = data["시비_실지급액"]
+    # 차인지급액(실수령액) = (국비/도비/시비 실지급액 합계 - 이미 공제액이 반영된 값) + 가산수당 + 교통비 + 법정공휴일수당
+    # (재원별 실지급액 자체에 공제액이 이미 한 번 반영되어 있으므로, 공제액계를 여기서 또 빼면 이중 차감됨)
+    net_pay = (_guk_net + _do_net + _si_net) + data["gasan_raw"] + data["교통비"] + data["공휴일수당"]
 
     payslip_card_html = f"""
     <style>
