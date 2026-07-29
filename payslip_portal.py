@@ -7,9 +7,9 @@
   배포 전용 시트(GSHEET_URL_PAYSLIP_SNAPSHOT)만 읽습니다.
 - 읽기 전용: 이 앱에서는 어떤 데이터도 수정/삭제하지 않습니다.
 
-인증: 이름 + 생년월일 6자리
+인증: 이름 + 주민등록번호 뒷자리 7자리
 세션: 브라우저 세션 동안만 유지 (별도 쿠키/로컬스토리지 저장 없음 -> 브라우저를 완전히 닫으면 재로그인 필요)
-잠금: 이름+생년월일 조합 기준 5회 실패 시 10분 잠금
+잠금: 이름+주민번호뒷자리 조합 기준 5회 실패 시 10분 잠금
 """
 
 import json
@@ -56,8 +56,8 @@ def _get_gspread_client():
 @st.cache_data(ttl=SNAPSHOT_CACHE_TTL, show_spinner=False)
 def load_snapshot():
     """배포 시트에서 (member_key -> payroll dict) / 급여월 / 갱신시각을 읽어온다.
-    대소문자 구분 없이 찾을 수 있도록 정규화 인덱스(norm_index)도 함께 만든다.
-    (영문 이름이 섞여 있을 때 'LISHUNHUA' / 'lishunhua' / 'Lishunhua'를 모두 같은 사람으로 인식하기 위함)"""
+    대소문자 구분 없이 찾을 수 있도록 정규화 인덱스(norm_index)도 함께 만들고,
+    '이름+주민번호뒷자리' 기준 로그인용 인덱스(rrn_index)도 함께 만든다."""
     gc = _get_gspread_client()
     sh = gc.open_by_url(SNAPSHOT_SHEET_URL)
 
@@ -65,13 +65,21 @@ def load_snapshot():
     rows = ws_snap.get_all_values()[1:]  # 헤더 행 제외
     data = {}
     norm_index = {}  # 정규화(공백 제거 + 대문자)된 키 -> 원본 키
+    rrn_index = {}   # 정규화된 '이름+주민번호뒷자리' -> 원본 키
     for row in rows:
         if len(row) < 2 or not row[0].strip():
             continue
         try:
             original_key = row[0].strip()
-            data[original_key] = json.loads(row[1])
+            parsed = json.loads(row[1])
+            data[original_key] = parsed
             norm_index["".join(original_key.split()).upper()] = original_key
+
+            rrn_back = str(parsed.get("주민번호뒷자리", "")).strip()
+            if rrn_back:
+                name_part = original_key[:-6]  # 키 규칙(이름+생년월일6자리)은 그대로이므로 뒤 6자리를 뗀 나머지가 이름
+                rrn_norm_key = "".join((name_part + rrn_back).split()).upper()
+                rrn_index[rrn_norm_key] = original_key
         except (json.JSONDecodeError, IndexError):
             continue
 
@@ -84,7 +92,7 @@ def load_snapshot():
     pay_month = int(meta[1])
     updated_at = meta[2] if len(meta) > 2 else "-"
     pay_date_str = meta[5] if len(meta) > 5 else None
-    return data, norm_index, pay_year, pay_month, updated_at, pay_date_str
+    return data, norm_index, rrn_index, pay_year, pay_month, updated_at, pay_date_str
 
 
 @st.cache_data(ttl=300, show_spinner=False)
@@ -117,7 +125,7 @@ def load_history():
 
 
 # =================================================================
-# 🔒 로그인 실패 잠금 (앱 프로세스 메모리에 공유 저장, 이름+생년월일 조합 기준)
+# 🔒 로그인 실패 잠금 (앱 프로세스 메모리에 공유 저장, 이름+주민번호뒷자리 조합 기준)
 # =================================================================
 @st.cache_resource
 def _login_attempt_store():
@@ -161,22 +169,22 @@ if not SNAPSHOT_SHEET_URL or SNAPSHOT_SHEET_URL.startswith("여기에"):
 
 # ---------- 로그인 전 ----------
 if st.session_state["authed_member"] is None:
-    st.markdown("이름과 생년월일 6자리(예: 641107)를 입력해주세요.")
+    st.markdown("이름과 주민등록번호 뒷자리 7자리를 입력해주세요.")
 
     with st.form("login_form"):
         name_input = st.text_input("이름")
-        birth_input = st.text_input("생년월일 6자리", max_chars=6, placeholder="예: 641107")
+        rrn_input = st.text_input("주민등록번호 뒷자리 7자리", max_chars=7, placeholder="예: 1234567", type="password")
         submitted = st.form_submit_button("조회하기", use_container_width=True)
 
     if submitted:
         name_clean = name_input.strip()
-        birth_clean = "".join(ch for ch in birth_input.strip() if ch.isdigit())
+        rrn_clean = "".join(ch for ch in rrn_input.strip() if ch.isdigit())
 
-        if not name_clean or len(birth_clean) != 6:
-            st.error("이름과 생년월일 6자리를 정확히 입력해주세요.")
+        if not name_clean or len(rrn_clean) != 7:
+            st.error("이름과 주민등록번호 뒷자리 7자리를 정확히 입력해주세요.")
         else:
             # 대소문자·공백 차이를 무시하고 비교하기 위해 정규화(공백 제거 + 대문자)한 키로 처리
-            login_key_norm = "".join(f"{name_clean}{birth_clean}".split()).upper()
+            login_key_norm = "".join(f"{name_clean}{rrn_clean}".split()).upper()
             locked, remain_sec = _check_lock(login_key_norm)
 
             if locked:
@@ -184,20 +192,20 @@ if st.session_state["authed_member"] is None:
                 st.error(f"🔒 5회 연속 조회 실패로 잠겼습니다. {mm}분 {ss}초 후 다시 시도해주세요.")
             else:
                 try:
-                    data, norm_index, pay_year, pay_month, updated_at, pay_date_str = load_snapshot()
+                    data, norm_index, rrn_index, pay_year, pay_month, updated_at, pay_date_str = load_snapshot()
                 except Exception as e:
                     st.error("데이터를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.")
                     st.caption(f"(관리자 확인용: {e})")
                     st.stop()
 
-                original_key = norm_index.get(login_key_norm)
+                original_key = rrn_index.get(login_key_norm)
                 if original_key is not None:
                     _register_success(login_key_norm)
                     st.session_state["authed_member"] = original_key
                     st.rerun()
                 else:
                     _register_fail(login_key_norm)
-                    st.error("입력하신 정보와 일치하는 급여명세서를 찾을 수 없습니다. 이름과 생년월일을 다시 확인해주세요.")
+                    st.error("입력하신 정보와 일치하는 급여명세서를 찾을 수 없습니다. 이름과 주민등록번호 뒷자리를 다시 확인해주세요.")
 
     st.caption("⚠️ 5회 연속 실패 시 10분간 조회가 제한됩니다. 다른 사람의 정보로 조회를 시도하지 마세요.")
 
@@ -206,7 +214,7 @@ else:
     member_key = st.session_state["authed_member"]
 
     try:
-        data, norm_index, pay_year, pay_month, updated_at, pay_date_str = load_snapshot()
+        data, norm_index, rrn_index, pay_year, pay_month, updated_at, pay_date_str = load_snapshot()
     except Exception as e:
         st.error("데이터를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.")
         st.caption(f"(관리자 확인용: {e})")
