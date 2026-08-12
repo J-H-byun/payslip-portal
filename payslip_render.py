@@ -85,7 +85,7 @@ def build_payslip_card_html(member_key: str, data: dict, pay_year: int, pay_mont
             <div style="flex:1;">
                 <div style="background-color:#e3faf2; padding:5px; text-align:center; font-weight:bold; border:1px solid #c3fae8; color:#0ca678; font-size:13px;">■ 지 급 내 역</div>
                 <table style="width:100%; border-collapse:collapse; font-size:12px;">
-                    <tr><th style="border:1px solid #dee2e6; padding:6px; text-align:left; background-color:#f8f9fa;">① 기본급 (재원통합)</th><td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap;">{data["기본급"]:,} 원</td></tr>
+                    <tr><th style="border:1px solid #dee2e6; padding:6px; text-align:left; background-color:#f8f9fa;">① 기본급 (재원통합)</th><td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap;">{data["기본급"]+edu_allowance:,} 원</td></tr>
                     <tr><th style="border:1px solid #dee2e6; padding:6px; text-align:left; background-color:#f8f9fa;">② 주휴수당</th><td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap;">{data["주휴수당"]:,} 원</td></tr>
                     <tr><th style="border:1px solid #dee2e6; padding:6px; text-align:left; background-color:#f8f9fa;">③ 할증(가산근로)</th><td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap;">{data["국비_할증"]+data["도비_할증"]+data["시비_할증"]:,} 원</td></tr>
                     <tr><th style="border:1px solid #dee2e6; padding:6px; text-align:left; background-color:#f8f9fa;">④ 가산수당</th><td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap;">{data["gasan_raw"]:,} 원</td></tr>
@@ -126,9 +126,9 @@ def build_payslip_card_html(member_key: str, data: dict, pay_year: int, pay_mont
             <tr>
                 <th style="border:1px solid #dee2e6; padding:6px; text-align:left; background-color:#f8f9fa;">기본급(연차 미포함)</th>
                 <td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap;">{data["국비_기본급"]:,}</td>
-                <td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap;">{data["도비_기본급"]:,}</td>
+                <td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap;">{data["도비_기본급"]+edu_allowance:,}</td>
                 <td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap;">{data["시비_기본급"]:,}</td>
-                <td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap; font-weight:bold;">{data["국비_기본급"]+data["도비_기본급"]+data["시비_기본급"]:,}</td>
+                <td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap; font-weight:bold;">{data["국비_기본급"]+data["도비_기본급"]+edu_allowance+data["시비_기본급"]:,}</td>
             </tr>
             <tr>
                 <th style="border:1px solid #dee2e6; padding:6px; text-align:left; background-color:#f8f9fa;">주휴수당</th>
@@ -154,9 +154,9 @@ def build_payslip_card_html(member_key: str, data: dict, pay_year: int, pay_mont
             <tr style="background-color:#f1f3f5;">
                 <th style="border:1px solid #dee2e6; padding:6px; text-align:left;">실지급액</th>
                 <td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap; font-weight:bold;">{_guk_net:,}</td>
-                <td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap; font-weight:bold;">{_do_net+edu_allowance:,}</td>
+                <td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap; font-weight:bold;">{_do_net:,}</td>
                 <td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap; font-weight:bold;">{_si_net:,}</td>
-                <td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap; font-weight:bold;">{_guk_net+_do_net+edu_allowance+_si_net:,}</td>
+                <td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap; font-weight:bold;">{_guk_net+_do_net+_si_net:,}</td>
             </tr>
         </table>
         <div style="margin-top:15px; background-color:#f1f3f5; padding:5px; display:flex; justify-content:space-between; font-size:12px;">
