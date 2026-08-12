@@ -18,10 +18,11 @@ import streamlit.components.v1 as components
 def build_payslip_card_html(member_key: str, data: dict, pay_year: int, pay_month: int, pay_date_str: str = None) -> str:
     """명세서 카드(HTML 조각)를 만든다. member_key는 '이름+생년월일6자리' 형식(예: 홍길동641107).
     pay_date_str: 실제 임금지급일(예: '2026-08-25'). 미제공 시 '-'로 표시(근로기준법 시행령 27조의2 3호 기재사항)."""
+    edu_allowance = data.get("도비_교육수당", 0)  # 옛 이력 데이터엔 이 필드가 없을 수 있어 안전하게 조회
     total_pay = (
         data["기본급"] + data["주휴수당"]
         + (data["국비_할증"] + data["도비_할증"] + data["시비_할증"])
-        + data["gasan_raw"] + data["교통비"] + data["공휴일수당"]
+        + data["gasan_raw"] + data["교통비"] + data["공휴일수당"] + edu_allowance
     )
     total_deduct = (
         data["국민연금"] + data["건강보험"] + data["요양보험"]
@@ -30,9 +31,10 @@ def build_payslip_card_html(member_key: str, data: dict, pay_year: int, pay_mont
     _guk_net = data["국비_실지급액"]
     _do_net = data["도비_실지급액"]
     _si_net = data["시비_실지급액"]
-    # 차인지급액(실수령액) = (국비/도비/시비 실지급액 합계 - 이미 공제액이 반영된 값) + 가산수당 + 교통비 + 법정공휴일수당
-    # (재원별 실지급액 자체에 공제액이 이미 한 번 반영되어 있으므로, 공제액계를 여기서 또 빼면 이중 차감됨)
-    net_pay = (_guk_net + _do_net + _si_net) + data["gasan_raw"] + data["교통비"] + data["공휴일수당"]
+    # 차인지급액(실수령액) = 지급액 계 - 공제액 계.
+    # (재원별 실지급액 필드는 도비_교육수당을 포함하는지 여부가 원본시트 수식에 따라 불확실하므로,
+    #  이중 계산/누락 리스크를 없애기 위해 우리가 직접 통제하는 total_pay/total_deduct 기준으로 계산)
+    net_pay = total_pay - total_deduct
 
     payslip_card_html = f"""
     <style>
@@ -152,9 +154,9 @@ def build_payslip_card_html(member_key: str, data: dict, pay_year: int, pay_mont
             <tr style="background-color:#f1f3f5;">
                 <th style="border:1px solid #dee2e6; padding:6px; text-align:left;">실지급액</th>
                 <td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap; font-weight:bold;">{_guk_net:,}</td>
-                <td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap; font-weight:bold;">{_do_net:,}</td>
+                <td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap; font-weight:bold;">{_do_net+edu_allowance:,}</td>
                 <td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap; font-weight:bold;">{_si_net:,}</td>
-                <td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap; font-weight:bold;">{_guk_net+_do_net+_si_net:,}</td>
+                <td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap; font-weight:bold;">{_guk_net+_do_net+edu_allowance+_si_net:,}</td>
             </tr>
         </table>
         <div style="margin-top:15px; background-color:#f1f3f5; padding:5px; display:flex; justify-content:space-between; font-size:12px;">
