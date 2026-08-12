@@ -28,13 +28,14 @@ def build_payslip_card_html(member_key: str, data: dict, pay_year: int, pay_mont
         data["국민연금"] + data["건강보험"] + data["요양보험"]
         + data["고용보험"] + data["소득세"] + data["지방소득세"]
     )
-    # 재원별 실지급액: app_push.py 집계 단계에서 원본 시트의 '실지급액=0인데 급여합계는 있는' 예외를
-    # 이미 급여합계로 보정해서 넘겨주므로, 여기서는 그 값을 그대로 신뢰해서 쓴다.
+    # 재원별 실지급액: 원본 시트("도비 급여" 등)의 실지급액 컬럼 값을 그대로 신뢰해서 사용
+    # (도비시간=0 + 교육수당만 있는 경우의 실지급액=0 버그는 원본 시트에서 직접 수정 완료됨)
     _guk_net = data["국비_실지급액"]
     _do_net = data["도비_실지급액"]
     _si_net = data["시비_실지급액"]
-    # 차인지급액(실수령액) = 지급액 계 - 공제액 계.
-    net_pay = total_pay - total_deduct
+    # 차인지급액(실수령액) = 국비+도비+시비 실지급액 합계 + 가산수당 + 교통비 + 법정공휴일수당
+    # (재원별 실지급액에 이미 공제가 반영되어 있으므로, 여기서 공제액을 또 빼면 안 됨)
+    net_pay = _guk_net + _do_net + _si_net + data["gasan_raw"] + data["교통비"] + data["공휴일수당"]
 
     payslip_card_html = f"""
     <style>
