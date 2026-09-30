@@ -53,19 +53,19 @@ def build_payslip_card_html(member_key: str, data: dict, pay_year: int, pay_mont
             .ps-card table {{ font-size: 11px !important; }}
             .ps-card td, .ps-card th {{ padding: 4px 3px !important; }}
             .ps-card table.ps-info td, .ps-card table.ps-info th {{ padding: 6px 5px !important; }}
-            .ps-card h3 {{ font-size: 18px !important; }}
+            .ps-card .ps-title {{ font-size: 18px !important; }}
         }}
         @container pscard (max-width: 380px) {{
             .ps-card {{ padding: 8px !important; }}
             .ps-card table {{ font-size: 9.5px !important; }}
             .ps-card td, .ps-card th {{ padding: 3px 2px !important; }}
             .ps-card table.ps-info td, .ps-card table.ps-info th {{ padding: 5px 4px !important; }}
-            .ps-card h3 {{ font-size: 16px !important; }}
+            .ps-card .ps-title {{ font-size: 16px !important; }}
         }}
     </style>
     <div class="ps-card-container" style="overflow-x:auto; -webkit-overflow-scrolling:touch;">
     <div class="ps-card" style="background-color:#ffffff; padding:25px; border:2px solid #dee2e6; border-radius:6px; color:#212529; font-family:'Malgun Gothic';">
-        <h3 style="text-align:center; margin-bottom:5px;">{pay_year}년 {pay_month}월 급여 명세서</h3>
+        <div class="ps-title" style="text-align:center; margin-bottom:5px; font-size:1.5em; font-weight:bold;">{pay_year}년 {pay_month}월 급여 명세서</div>
         <p style="text-align:center; font-size:12px; color:#868e96; margin-bottom:20px;">(사)창원시장애인부모회</p>
         <table class="ps-info" style="width:100%; border-collapse:collapse; margin-bottom:15px; font-size:13px;">
             <tr style="background-color:#f8f9fa;">
@@ -205,7 +205,7 @@ def build_payslip_full_html(member_key: str, data: dict, pay_year: int, pay_mont
         .ps-card {{ padding:10px !important; min-width:0 !important; }}
         .ps-card table {{ font-size:11px !important; }}
         .ps-card td, .ps-card th {{ padding:3px 5px !important; line-height:1.25 !important; }}
-        .ps-card h3 {{ margin-bottom:2px !important; font-size:17px !important; }}
+        .ps-card .ps-title {{ margin-bottom:2px !important; font-size:17px !important; }}
         .ps-card > div[style*="margin-top"] {{ margin-top:6px !important; }}
         .ps-card div[style*="padding:10px"] {{ padding:5px 8px !important; }}
         .ps-card div[style*="padding:5px"] {{ padding:3px !important; }}
