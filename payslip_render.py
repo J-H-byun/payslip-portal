@@ -72,16 +72,12 @@ def build_payslip_card_html(member_key: str, data: dict, pay_year: int, pay_mont
                 <td style="border:1px solid #dee2e6; padding:6px; text-align:center; font-weight:bold;">{pay_date_str if pay_date_str else "-"}</td>
             </tr>
             <tr style="background-color:#f8f9fa;">
-                <th style="border:1px solid #dee2e6; padding:6px;">총 근로시간</th>
-                <td style="border:1px solid #dee2e6; padding:6px; text-align:center;">{data["국비시간"]+data["도비시간"]+data["시비시간"]+data["국비할증시간"]+data["도비할증시간"]+data["시비할증시간"]:.1f}H</td>
-                <th style="border:1px solid #dee2e6; padding:6px;">바우처 사용량</th>
-                <td style="border:1px solid #dee2e6; padding:6px; text-align:center; font-weight:bold; font-size:12px;">{(data["국비시간"]+data["도비시간"]+data["시비시간"])+(data["국비할증시간"]+data["도비할증시간"]+data["시비할증시간"])*1.5:.2f}H<br><span style="font-weight:normal; font-size:11px;">(국:{data["국비시간"]+data["국비할증시간"]*1.5:.2f}/도:{data["도비시간"]+data["도비할증시간"]*1.5:.2f}/시:{data["시비시간"]+data["시비할증시간"]*1.5:.2f})</span></td>
+                <th style="border:1px solid #dee2e6; padding:6px; width:15%;">총 근로시간</th>
+                <td style="border:1px solid #dee2e6; padding:6px; text-align:center;" colspan="3">{data["국비시간"]+data["도비시간"]+data["시비시간"]+data["국비할증시간"]+data["도비할증시간"]+data["시비할증시간"]:.1f}시간 [기본근로: {data["국비시간"]+data["도비시간"]+data["시비시간"]:.1f}시간 / 할증근로: {data["국비할증시간"]+data["도비할증시간"]+data["시비할증시간"]:.1f}시간]</td>
             </tr>
             <tr style="background-color:#f8f9fa;">
-                <th style="border:1px solid #dee2e6; padding:6px;">기본근로시간</th>
-                <td style="border:1px solid #dee2e6; padding:6px; text-align:center;">{data["국비시간"]+data["도비시간"]+data["시비시간"]:.1f}H</td>
-                <th style="border:1px solid #dee2e6; padding:6px;">할증근로시간<br><span style="font-weight:normal; font-size:11px;">(연장·야간·휴일)</span></th>
-                <td style="border:1px solid #dee2e6; padding:6px; text-align:center;">{data["국비할증시간"]+data["도비할증시간"]+data["시비할증시간"]:.1f}H</td>
+                <th style="border:1px solid #dee2e6; padding:6px;">바우처 사용량</th>
+                <td style="border:1px solid #dee2e6; padding:6px; text-align:center; font-weight:bold;" colspan="3">{(data["국비시간"]+data["도비시간"]+data["시비시간"])+(data["국비할증시간"]+data["도비할증시간"]+data["시비할증시간"])*1.5:.2f}시간 [국비: {data["국비시간"]+data["국비할증시간"]*1.5:.2f}시간 / 도비: {data["도비시간"]+data["도비할증시간"]*1.5:.2f}시간 / 시비: {data["시비시간"]+data["시비할증시간"]*1.5:.2f}시간]</td>
             </tr>
         </table>
         <div style="display:flex; gap:15px;">
