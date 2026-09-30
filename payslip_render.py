@@ -80,8 +80,8 @@ def build_payslip_card_html(member_key: str, data: dict, pay_year: int, pay_mont
             <tr style="background-color:#f8f9fa;">
                 <th style="border:1px solid #dee2e6; padding:6px;">임금지급일</th>
                 <td style="border:1px solid #dee2e6; padding:6px; text-align:center; font-weight:bold;">{pay_date_str if pay_date_str else "-"}</td>
-                <th style="border:1px solid #dee2e6; padding:6px;">바우처 사용시간<br><span style="font-weight:normal; font-size:10px;">(기본 1:1 + 할증 1.5:1)</span></th>
-                <td style="border:1px solid #dee2e6; padding:6px; text-align:center; font-weight:bold;">{(data["국비시간"]+data["도비시간"]+data["시비시간"])+(data["국비할증시간"]+data["도비할증시간"]+data["시비할증시간"])*1.5:.1f}H</td>
+                <th style="border:1px solid #dee2e6; padding:6px;">바우처 사용량</th>
+                <td style="border:1px solid #dee2e6; padding:6px; text-align:center; font-weight:bold;">{(data["국비시간"]+data["도비시간"]+data["시비시간"])+(data["국비할증시간"]+data["도비할증시간"]+data["시비할증시간"])*1.5:.2f}H</td>
             </tr>
         </table>
         <div style="display:flex; gap:15px;">
