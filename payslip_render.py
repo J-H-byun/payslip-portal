@@ -62,26 +62,26 @@ def build_payslip_card_html(member_key: str, data: dict, pay_year: int, pay_mont
             <tr style="background-color:#f8f9fa;">
                 <th style="border:1px solid #dee2e6; padding:6px; width:15%;">성 명</th>
                 <td style="border:1px solid #dee2e6; padding:6px; width:35%; text-align:center; font-weight:bold;">{member_key[:-6]}</td>
-                <th style="border:1px solid #dee2e6; padding:6px; width:15%;">입사일자</th>
-                <td style="border:1px solid #dee2e6; padding:6px; width:35%; text-align:center;">{data["입사일"]}</td>
+                <th style="border:1px solid #dee2e6; padding:6px; width:15%;">생년월일</th>
+                <td style="border:1px solid #dee2e6; padding:6px; width:35%; text-align:center;">{member_key[-6:]}</td>
             </tr>
             <tr style="background-color:#f8f9fa;">
-                <th style="border:1px solid #dee2e6; padding:6px;">생년월일</th>
-                <td style="border:1px solid #dee2e6; padding:6px; text-align:center;">{member_key[-6:]}</td>
+                <th style="border:1px solid #dee2e6; padding:6px;">입사일자</th>
+                <td style="border:1px solid #dee2e6; padding:6px; text-align:center;">{data["입사일"]}</td>
+                <th style="border:1px solid #dee2e6; padding:6px;">임금지급일</th>
+                <td style="border:1px solid #dee2e6; padding:6px; text-align:center; font-weight:bold;">{pay_date_str if pay_date_str else "-"}</td>
+            </tr>
+            <tr style="background-color:#f8f9fa;">
                 <th style="border:1px solid #dee2e6; padding:6px;">총 근로시간</th>
                 <td style="border:1px solid #dee2e6; padding:6px; text-align:center; font-size:12px;">{data["국비시간"]+data["도비시간"]+data["시비시간"]+data["국비할증시간"]+data["도비할증시간"]+data["시비할증시간"]:.1f}H (국:{data["국비시간"]+data["국비할증시간"]:.1f}/도:{data["도비시간"]+data["도비할증시간"]:.1f}/시:{data["시비시간"]+data["시비할증시간"]:.1f})</td>
+                <th style="border:1px solid #dee2e6; padding:6px;">바우처 사용량</th>
+                <td style="border:1px solid #dee2e6; padding:6px; text-align:center; font-weight:bold;">{(data["국비시간"]+data["도비시간"]+data["시비시간"])+(data["국비할증시간"]+data["도비할증시간"]+data["시비할증시간"])*1.5:.2f}H</td>
             </tr>
             <tr style="background-color:#f8f9fa;">
                 <th style="border:1px solid #dee2e6; padding:6px;">기본근로시간</th>
                 <td style="border:1px solid #dee2e6; padding:6px; text-align:center;">{data["국비시간"]+data["도비시간"]+data["시비시간"]:.1f}H</td>
                 <th style="border:1px solid #dee2e6; padding:6px;">할증근로시간<br><span style="font-weight:normal; font-size:10px;">(연장·야간·휴일)</span></th>
                 <td style="border:1px solid #dee2e6; padding:6px; text-align:center;">{data["국비할증시간"]+data["도비할증시간"]+data["시비할증시간"]:.1f}H</td>
-            </tr>
-            <tr style="background-color:#f8f9fa;">
-                <th style="border:1px solid #dee2e6; padding:6px;">임금지급일</th>
-                <td style="border:1px solid #dee2e6; padding:6px; text-align:center; font-weight:bold;">{pay_date_str if pay_date_str else "-"}</td>
-                <th style="border:1px solid #dee2e6; padding:6px;">바우처 사용량</th>
-                <td style="border:1px solid #dee2e6; padding:6px; text-align:center; font-weight:bold;">{(data["국비시간"]+data["도비시간"]+data["시비시간"])+(data["국비할증시간"]+data["도비할증시간"]+data["시비할증시간"])*1.5:.2f}H</td>
             </tr>
         </table>
         <div style="display:flex; gap:15px;">
