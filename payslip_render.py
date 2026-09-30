@@ -67,24 +67,24 @@ def build_payslip_card_html(member_key: str, data: dict, pay_year: int, pay_mont
         <p style="text-align:center; font-size:12px; color:#868e96; margin-bottom:20px;">(사)창원시장애인부모회</p>
         <table style="width:100%; border-collapse:collapse; margin-bottom:15px; font-size:13px;">
             <tr style="background-color:#f8f9fa;">
-                <th style="border:1px solid #dee2e6; padding:6px; width:15%;">성 명</th>
-                <td style="border:1px solid #dee2e6; padding:6px; width:35%; text-align:center; font-weight:bold;">{member_key[:-6]}</td>
-                <th style="border:1px solid #dee2e6; padding:6px; width:15%;">생년월일</th>
-                <td style="border:1px solid #dee2e6; padding:6px; width:35%; text-align:center;">{member_key[-6:]}</td>
+                <th style="border:1px solid #dee2e6; padding:10px; width:15%;">성 명</th>
+                <td style="border:1px solid #dee2e6; padding:10px; width:35%; text-align:center; font-weight:bold;">{member_key[:-6]}</td>
+                <th style="border:1px solid #dee2e6; padding:10px; width:15%;">생년월일</th>
+                <td style="border:1px solid #dee2e6; padding:10px; width:35%; text-align:center;">{member_key[-6:]}</td>
             </tr>
             <tr style="background-color:#f8f9fa;">
-                <th style="border:1px solid #dee2e6; padding:6px;">입사일자</th>
-                <td style="border:1px solid #dee2e6; padding:6px; text-align:center;">{data["입사일"]}</td>
-                <th style="border:1px solid #dee2e6; padding:6px;">임금지급일</th>
-                <td style="border:1px solid #dee2e6; padding:6px; text-align:center; font-weight:bold;">{pay_date_str if pay_date_str else "-"}</td>
+                <th style="border:1px solid #dee2e6; padding:10px;">입사일자</th>
+                <td style="border:1px solid #dee2e6; padding:10px; text-align:center;">{data["입사일"]}</td>
+                <th style="border:1px solid #dee2e6; padding:10px;">임금지급일</th>
+                <td style="border:1px solid #dee2e6; padding:10px; text-align:center; font-weight:bold;">{pay_date_str if pay_date_str else "-"}</td>
             </tr>
             <tr style="background-color:#f8f9fa;">
-                <th style="border:1px solid #dee2e6; padding:6px; width:15%;">총 근로시간</th>
-                <td style="border:1px solid #dee2e6; padding:6px; text-align:center;" colspan="3"><span style="font-weight:bold;">{_fmt_h(data["국비시간"]+data["도비시간"]+data["시비시간"]+data["국비할증시간"]+data["도비할증시간"]+data["시비할증시간"])}시간</span> <span style="color:#868e96;">[기본근로: {_fmt_h(data["국비시간"]+data["도비시간"]+data["시비시간"])}시간 / 할증근로: {_fmt_h(data["국비할증시간"]+data["도비할증시간"]+data["시비할증시간"])}시간]</span></td>
+                <th style="border:1px solid #dee2e6; padding:10px; width:15%;">총 근로시간</th>
+                <td style="border:1px solid #dee2e6; padding:10px; text-align:center;" colspan="3"><span style="font-weight:bold;">{_fmt_h(data["국비시간"]+data["도비시간"]+data["시비시간"]+data["국비할증시간"]+data["도비할증시간"]+data["시비할증시간"])}시간</span> <span style="color:#868e96;">[기본근로: {_fmt_h(data["국비시간"]+data["도비시간"]+data["시비시간"])}시간 / 할증근로: {_fmt_h(data["국비할증시간"]+data["도비할증시간"]+data["시비할증시간"])}시간]</span></td>
             </tr>
             <tr style="background-color:#f8f9fa;">
-                <th style="border:1px solid #dee2e6; padding:6px;">바우처 사용량</th>
-                <td style="border:1px solid #dee2e6; padding:6px; text-align:center;" colspan="3"><span style="font-weight:bold;">{_fmt_h((data["국비시간"]+data["도비시간"]+data["시비시간"])+(data["국비할증시간"]+data["도비할증시간"]+data["시비할증시간"])*1.5)}시간</span> <span style="color:#868e96;">[국비: {_fmt_h(data["국비시간"]+data["국비할증시간"]*1.5)}시간 / 도비: {_fmt_h(data["도비시간"]+data["도비할증시간"]*1.5)}시간 / 시비: {_fmt_h(data["시비시간"]+data["시비할증시간"]*1.5)}시간]</span></td>
+                <th style="border:1px solid #dee2e6; padding:10px;">바우처 사용량</th>
+                <td style="border:1px solid #dee2e6; padding:10px; text-align:center;" colspan="3"><span style="font-weight:bold;">{_fmt_h((data["국비시간"]+data["도비시간"]+data["시비시간"])+(data["국비할증시간"]+data["도비할증시간"]+data["시비할증시간"])*1.5)}시간</span> <span style="color:#868e96;">[국비: {_fmt_h(data["국비시간"]+data["국비할증시간"]*1.5)}시간 / 도비: {_fmt_h(data["도비시간"]+data["도비할증시간"]*1.5)}시간 / 시비: {_fmt_h(data["시비시간"]+data["시비할증시간"]*1.5)}시간]</span></td>
             </tr>
         </table>
         <div style="display:flex; gap:15px;">
