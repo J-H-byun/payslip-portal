@@ -15,6 +15,13 @@ import json
 import streamlit.components.v1 as components
 
 
+def _fmt_h(val: float) -> str:
+    """시간 값을 표시용 문자열로 만든다. 소수점이 없으면(정수) 그대로, 있으면 있는 자리까지만 보여준다.
+    예: 155.0 -> '155', 115.5 -> '115.5', 78.25 -> '78.25'"""
+    s = f"{val:.2f}".rstrip("0").rstrip(".")
+    return s if s else "0"
+
+
 def build_payslip_card_html(member_key: str, data: dict, pay_year: int, pay_month: int, pay_date_str: str = None) -> str:
     """명세서 카드(HTML 조각)를 만든다. member_key는 '이름+생년월일6자리' 형식(예: 홍길동641107).
     pay_date_str: 실제 임금지급일(예: '2026-08-25'). 미제공 시 '-'로 표시(근로기준법 시행령 27조의2 3호 기재사항)."""
@@ -73,11 +80,11 @@ def build_payslip_card_html(member_key: str, data: dict, pay_year: int, pay_mont
             </tr>
             <tr style="background-color:#f8f9fa;">
                 <th style="border:1px solid #dee2e6; padding:6px; width:15%;">총 근로시간</th>
-                <td style="border:1px solid #dee2e6; padding:6px; text-align:center;" colspan="3"><span style="font-weight:bold;">{data["국비시간"]+data["도비시간"]+data["시비시간"]+data["국비할증시간"]+data["도비할증시간"]+data["시비할증시간"]:.1f}시간</span> <span style="color:#868e96;">[기본근로: {data["국비시간"]+data["도비시간"]+data["시비시간"]:.1f}시간 / 할증근로: {data["국비할증시간"]+data["도비할증시간"]+data["시비할증시간"]:.1f}시간]</span></td>
+                <td style="border:1px solid #dee2e6; padding:6px; text-align:center;" colspan="3"><span style="font-weight:bold;">{_fmt_h(data["국비시간"]+data["도비시간"]+data["시비시간"]+data["국비할증시간"]+data["도비할증시간"]+data["시비할증시간"])}시간</span> <span style="color:#868e96;">[기본근로: {_fmt_h(data["국비시간"]+data["도비시간"]+data["시비시간"])}시간 / 할증근로: {_fmt_h(data["국비할증시간"]+data["도비할증시간"]+data["시비할증시간"])}시간]</span></td>
             </tr>
             <tr style="background-color:#f8f9fa;">
                 <th style="border:1px solid #dee2e6; padding:6px;">바우처 사용량</th>
-                <td style="border:1px solid #dee2e6; padding:6px; text-align:center;" colspan="3"><span style="font-weight:bold;">{(data["국비시간"]+data["도비시간"]+data["시비시간"])+(data["국비할증시간"]+data["도비할증시간"]+data["시비할증시간"])*1.5:.2f}시간</span> <span style="color:#868e96;">[국비: {data["국비시간"]+data["국비할증시간"]*1.5:.2f}시간 / 도비: {data["도비시간"]+data["도비할증시간"]*1.5:.2f}시간 / 시비: {data["시비시간"]+data["시비할증시간"]*1.5:.2f}시간]</span></td>
+                <td style="border:1px solid #dee2e6; padding:6px; text-align:center;" colspan="3"><span style="font-weight:bold;">{_fmt_h((data["국비시간"]+data["도비시간"]+data["시비시간"])+(data["국비할증시간"]+data["도비할증시간"]+data["시비할증시간"])*1.5)}시간</span> <span style="color:#868e96;">[국비: {_fmt_h(data["국비시간"]+data["국비할증시간"]*1.5)}시간 / 도비: {_fmt_h(data["도비시간"]+data["도비할증시간"]*1.5)}시간 / 시비: {_fmt_h(data["시비시간"]+data["시비할증시간"]*1.5)}시간]</span></td>
             </tr>
         </table>
         <div style="display:flex; gap:15px;">
