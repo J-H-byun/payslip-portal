@@ -98,7 +98,7 @@ def build_payslip_card_html(member_key: str, data: dict, pay_year: int, pay_mont
                     <tr><th style="border:1px solid #dee2e6; padding:6px; text-align:left; background-color:#f8f9fa;">③ 할증(가산근로)</th><td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap;">{data["국비_할증"]+data["도비_할증"]+data["시비_할증"]:,} 원</td></tr>
                     <tr><th style="border:1px solid #dee2e6; padding:6px; text-align:left; background-color:#f8f9fa;">④ 가산수당</th><td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap;">{data["gasan_raw"]:,} 원</td></tr>
                     <tr><th style="border:1px solid #dee2e6; padding:6px; text-align:left; background-color:#f8f9fa;">⑤ 교통비 (국비+도비)</th><td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap;">{data["교통비"]:,} 원</td></tr>
-                    <tr><th style="border:1px solid #dee2e6; padding:6px; text-align:left; background-color:#f8f9fa;">⑥ 법정공휴일 수당</th><td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap;">{data["공휴일수당"]:,} 원</td></tr>
+                    <tr><th style="border:1px solid #dee2e6; padding:6px; text-align:left; background-color:#f8f9fa;">⑥ 기타 수당</th><td style="border:1px solid #dee2e6; padding:6px; text-align:right; white-space:nowrap;">{data["공휴일수당"]:,} 원</td></tr>
                     <tr style="background-color:#f1f3f5; font-weight:bold;"><td style="border:1px solid #dee2e6; padding:7px;">지급액 계</td><td style="border:1px solid #dee2e6; padding:7px; text-align:right; white-space:nowrap;">{total_pay:,} 원</td></tr>
                 </table>
             </div>
