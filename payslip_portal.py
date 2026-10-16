@@ -26,7 +26,8 @@ from payslip_render import build_payslip_full_html, render_image_download_button
 # ⚙️ 설정
 # =================================================================
 # app_push.py의 GSHEET_URL_PAYSLIP_SNAPSHOT과 반드시 동일한 시트 URL이어야 합니다.
-SNAPSHOT_SHEET_URL = "https://docs.google.com/spreadsheets/d/1Ah8xGXJEBpezYGZMp3k1MjKG1bCXZdLVuzewpMDZAlo/edit?gid=0#gid=0"
+_SNAP_ID = str(st.secrets.get("org", {}).get("sheet_snap", "")).strip()
+SNAPSHOT_SHEET_URL = ("https://docs.google.com/spreadsheets/d/" + _SNAP_ID + "/edit") if _SNAP_ID else ""
 
 MAX_FAIL = 5          # 이 횟수만큼 실패하면 잠금
 LOCK_MINUTES = 10      # 잠금 유지 시간(분)
