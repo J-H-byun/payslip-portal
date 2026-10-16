@@ -12,7 +12,16 @@
 """
 
 import json
+import streamlit as st
 import streamlit.components.v1 as components
+
+
+def _org(key: str, default: str = "") -> str:
+    """Streamlit Secrets의 [org]에서 기관별 값을 읽는다. 없으면 default."""
+    try:
+        return str(st.secrets.get("org", {}).get(key, default))
+    except Exception:
+        return default
 
 
 def _fmt_h(val: float) -> str:
@@ -66,7 +75,7 @@ def build_payslip_card_html(member_key: str, data: dict, pay_year: int, pay_mont
     <div class="ps-card-container" style="overflow-x:auto; -webkit-overflow-scrolling:touch;">
     <div class="ps-card" style="background-color:#ffffff; padding:25px; border:2px solid #dee2e6; border-radius:6px; color:#212529; font-family:'Malgun Gothic';">
         <div class="ps-title" style="text-align:center; margin-bottom:5px; font-size:1.5em; font-weight:bold;">{pay_year}년 {pay_month}월 급여 명세서</div>
-        <p style="text-align:center; font-size:12px; color:#868e96; margin-bottom:20px;">(사)창원시장애인부모회</p>
+        <p style="text-align:center; font-size:12px; color:#868e96; margin-bottom:20px;">{_org('name')}</p>
         <table class="ps-info" style="width:100%; border-collapse:collapse; margin-bottom:15px; font-size:13px;">
             <tr style="background-color:#f8f9fa;">
                 <th style="border:1px solid #dee2e6; padding:8px; width:20%;">성 명</th>
@@ -176,8 +185,8 @@ def build_payslip_card_html(member_key: str, data: dict, pay_year: int, pay_mont
             <tr><th style="border:1px solid #dee2e6; padding:5px; text-align:left; background-color:#f8f9fa; width:18%;">① 기본급</th><td style="border:1px solid #dee2e6; padding:5px;"><i>(근로시간(기본) × 기본임금) + (근로시간(할증) × 할증임금) + (총 근로시간 × 연차수당 단가)</i></td></tr>
             <tr><th style="border:1px solid #dee2e6; padding:5px; text-align:left; background-color:#f8f9fa;">② 주휴수당</th><td style="border:1px solid #dee2e6; padding:5px;"><i>근로시간(기본) × 주휴수당 단가</i></td></tr>
             <tr><th style="border:1px solid #dee2e6; padding:5px; text-align:left; background-color:#f8f9fa;">③ 할증(가산근로)</th><td style="border:1px solid #dee2e6; padding:5px;"><i>근로시간(할증) × 시간당 할증임금 (야간/연장 등 가산근로 해당분)</i></td></tr>
-            <tr><th style="border:1px solid #dee2e6; padding:5px; text-align:left; background-color:#f8f9fa;">④ 가산수당</th><td style="border:1px solid #dee2e6; padding:5px;"><i>(근로시간(기본) × 3,300원 + 근로시간(할증) × 4,950원) × 75%</i></td></tr>
-            <tr><th style="border:1px solid #dee2e6; padding:5px; text-align:left; background-color:#f8f9fa;">⑤ 교통비</th><td style="border:1px solid #dee2e6; padding:5px;"><i>제공기관 거리 10km 미만: 1회 6,000원 / 10km 이상: 1회 9,000원</i></td></tr>
+            <tr><th style="border:1px solid #dee2e6; padding:5px; text-align:left; background-color:#f8f9fa;">④ 가산수당</th><td style="border:1px solid #dee2e6; padding:5px;"><i>{_org('note_gasan', '(근로시간(기본) × 3,300원 + 근로시간(할증) × 4,950원) × 75%')}</i></td></tr>
+            <tr><th style="border:1px solid #dee2e6; padding:5px; text-align:left; background-color:#f8f9fa;">⑤ 교통비</th><td style="border:1px solid #dee2e6; padding:5px;"><i>{_org('note_transport', '제공기관 거리 10km 미만: 1회 6,000원 / 10km 이상: 1회 9,000원')}</i></td></tr>
             <tr><th style="border:1px solid #dee2e6; padding:5px; text-align:left; background-color:#f8f9fa;">⑥ 법정공휴일 수당</th><td style="border:1px solid #dee2e6; padding:5px;"><i>(기본급 시급 × 공휴일 근로시간 × 1.5) + (기본급 × 일일 소정근로시간) − 휴일 산정임금</i></td></tr>
         </table>
     </div>
