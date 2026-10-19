@@ -17,9 +17,14 @@ import streamlit.components.v1 as components
 
 
 def _org(key: str, default: str = "") -> str:
-    """Streamlit Secrets의 [org]에서 기관별 값을 읽는다. 없으면 default."""
+    """기관별 값을 읽는다. 포털은 [org], 관리자 앱은 지금 선택한 [orgs.기관코드]. 없으면 default."""
     try:
-        return str(st.secrets.get("org", {}).get(key, default))
+        if "org" in st.secrets:
+            return str(st.secrets["org"].get(key, default))
+        code = st.session_state.get("admin_org")
+        if code and "orgs" in st.secrets and code in st.secrets["orgs"]:
+            return str(st.secrets["orgs"][code].get(key, default))
+        return default
     except Exception:
         return default
 
